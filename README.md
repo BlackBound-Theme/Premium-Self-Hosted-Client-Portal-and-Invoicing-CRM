@@ -1,1 +1,1 @@
-# Premium-Self-Hosted-Client-Portal-and-Invoicing-CRM
+"This is a demo. Buy the full version on Codester [https://www.codester.com/blackbound/]."
