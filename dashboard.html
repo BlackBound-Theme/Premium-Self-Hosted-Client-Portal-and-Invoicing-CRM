@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — VaultCRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+    tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],display:['Outfit','sans-serif']},colors:{surface:{primary:'#0a0a12',secondary:'#11111b',elevated:'#1a1a2e',glass:'rgba(255,255,255,0.04)'},accent:{cyan:'#06b6d4',indigo:'#6366f1',violet:'#8b5cf6',rose:'#f43f5e',emerald:'#10b981',amber:'#f59e0b'},vault:{700:'#4338ca',800:'#1e1b4b',900:'#0f0d2e',950:'#080716'}}}}}
+    </script>
+    <link rel="stylesheet" href="css/demo.css">
+</head>
+<body class="min-h-screen flex bg-surface-primary font-sans antialiased text-slate-200">
+    <div id="sidebar-overlay" class="hidden fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"></div>
+
+    <aside id="portal-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-surface-secondary border-r border-white/5 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-auto transition-transform duration-300 ease-out flex flex-col">
+        <div class="flex items-center gap-3 px-6 py-5 border-b border-white/5">
+            <img src="logo.png" alt="VaultCRM" class="w-9 h-9 rounded-lg object-contain">
+            <span class="font-display font-bold text-lg text-white tracking-tight">VaultCRM</span>
+        </div>
+        <nav id="sidebar-nav" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto"></nav>
+        <div id="sidebar-user" class="px-4 py-4 border-t border-white/5"></div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-h-screen">
+        <header class="sticky top-0 z-20 bg-surface-primary/80 backdrop-blur-lg border-b border-white/5">
+            <div class="flex items-center justify-between px-4 lg:px-8 py-3">
+                <div class="flex items-center gap-4">
+                    <button id="sidebar-toggle" class="lg:hidden p-2 text-slate-400 hover:text-white transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <h1 class="text-lg font-display font-semibold text-white">Dashboard</h1>
+                </div>
+            </div>
+        </header>
+
+        <main id="dashboard-content" class="flex-1 p-4 lg:p-8"></main>
+    </div>
+
+    <script src="js/demo-data.js"></script>
+    <script src="js/demo-app.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const user = requireAuth();
+        if (!user) return;
+        populateSidebar(user);
+        initMobileSidebar();
+        renderDashboard(user);
+    });
+
+    function renderDashboard(user) {
+        const container = document.getElementById('dashboard-content');
+        if (user.role === 'admin') {
+            const m = DEMO_METRICS.admin;
+            container.innerHTML = `
+            <div class="space-y-8 animate-fadeIn">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    ${metricCard('Active Clients', m.totalClients, 'indigo', 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z')}
+                    ${metricCard('Active Projects', m.activeProjects, 'cyan', 'M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7')}
+                    ${metricCard('Pending Invoices', m.pendingInvoices, 'amber', 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z')}
+                    ${metricCard('Revenue This Month', formatCurrency(m.revenueThisMonth), 'emerald', 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z')}
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-surface-elevated border border-white/5 rounded-[0.875rem] p-5 shadow-lg">
+                        <h3 class="text-sm font-semibold text-white mb-4">Recent Invoices</h3>
+                        <div class="space-y-3">
+                            ${DEMO_INVOICES.slice(0,5).map(inv => `
+                            <a href="invoices.html" class="flex items-center justify-between p-3 rounded-lg hover:bg-white/[0.03] transition-colors group">
+                                <div><p class="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">${inv.number}</p><p class="text-xs text-slate-500">${inv.client}</p></div>
+                                <div class="text-right"><p class="text-sm font-semibold text-white">${formatCurrency(inv.total)}</p>${renderBadge(inv.status.charAt(0).toUpperCase()+inv.status.slice(1), statusBadgeClass(inv.status))}</div>
+                            </a>`).join('')}
+                        </div>
+                    </div>
+                    <div class="bg-surface-elevated border border-white/5 rounded-[0.875rem] p-5 shadow-lg">
+                        <h3 class="text-sm font-semibold text-white mb-4">Upcoming Deadlines</h3>
+                        <div class="space-y-3">
+                            ${DEMO_PROJECTS.filter(p=>p.status==='active').map(p => `
+                            <div class="flex items-center justify-between p-3 rounded-lg hover:bg-white/[0.03] transition-colors">
+                                <div><p class="text-sm font-medium text-slate-200">${p.title}</p><p class="text-xs text-slate-500">${p.client}</p></div>
+                                <div class="text-right"><p class="text-sm text-slate-300">${p.deadline}</p></div>
+                            </div>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        } else {
+            const m = DEMO_METRICS.client;
+            const myProjects = DEMO_PROJECTS.filter(p=>p.client===user.name);
+            const myInvoices = DEMO_INVOICES.filter(i=>i.client===user.name);
+            container.innerHTML = `
+            <div class="space-y-8 animate-fadeIn">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    ${metricCard('My Projects', myProjects.length, 'indigo')}
+                    ${metricCard('Open Invoices', myInvoices.filter(i=>i.status!=='paid').length, 'amber')}
+                    ${metricCard('Uploaded Files', m.uploadedFiles, 'cyan')}
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-surface-elevated border border-white/5 rounded-[0.875rem] p-5 shadow-lg">
+                        <h3 class="text-sm font-semibold text-white mb-4">My Projects</h3>
+                        <div class="space-y-3">${myProjects.map(p => `
+                            <a href="kanban.html" class="flex items-center justify-between p-3 rounded-lg hover:bg-white/[0.03] transition-colors group">
+                                <div><p class="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">${p.title}</p><p class="text-xs text-slate-500">${p.tasksCount} tasks</p></div>
+                                <div class="flex items-center gap-3"><div class="w-24 h-1.5 bg-surface-primary rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full" style="width:${p.completion}%"></div></div><span class="text-xs text-slate-400 min-w-[2rem] text-right">${p.completion}%</span></div>
+                            </a>`).join('')}</div>
+                    </div>
+                    <div class="bg-surface-elevated border border-white/5 rounded-[0.875rem] p-5 shadow-lg">
+                        <h3 class="text-sm font-semibold text-white mb-4">My Invoices</h3>
+                        <div class="space-y-3">${myInvoices.map(inv => `
+                            <a href="invoices.html" class="flex items-center justify-between p-3 rounded-lg hover:bg-white/[0.03] transition-colors group">
+                                <div><p class="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">${inv.number}</p><p class="text-xs text-slate-500">Due ${inv.dueDate}</p></div>
+                                <div class="text-right"><p class="text-sm font-semibold text-white">${formatCurrency(inv.total)}</p>${renderBadge(inv.status.charAt(0).toUpperCase()+inv.status.slice(1), statusBadgeClass(inv.status))}</div>
+                            </a>`).join('')}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+    }
+
+    function metricCard(label, value, color, iconPath) {
+        const iconHtml = iconPath ? `<div class="w-8 h-8 rounded-lg bg-accent-${color}/10 flex items-center justify-center"><svg class="w-4 h-4 text-accent-${color}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPath}"/></svg></div>` : '';
+        return `<div class="bg-surface-glass backdrop-blur-xl border border-white/[0.06] rounded-[0.875rem] p-5 shadow-lg flex flex-col gap-2">
+            <div class="flex items-center justify-between"><div class="text-xs uppercase tracking-wider text-slate-400">${label}</div>${iconHtml}</div>
+            <div class="text-2xl lg:text-3xl font-display font-bold text-white">${value}</div>
+        </div>`;
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Hub — VaultCRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],display:['Outfit','sans-serif']},colors:{surface:{primary:'#0a0a12',secondary:'#11111b',elevated:'#1a1a2e',glass:'rgba(255,255,255,0.04)'},accent:{cyan:'#06b6d4',indigo:'#6366f1',violet:'#8b5cf6',rose:'#f43f5e',emerald:'#10b981',amber:'#f59e0b'},vault:{700:'#4338ca'}}}}}</script>
+    <link rel="stylesheet" href="css/demo.css">
+</head>
+<body class="min-h-screen flex bg-surface-primary font-sans antialiased text-slate-200">
+    <div id="sidebar-overlay" class="hidden fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"></div>
+    <aside id="portal-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-surface-secondary border-r border-white/5 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-auto transition-transform duration-300 ease-out flex flex-col">
+        <div class="flex items-center gap-3 px-6 py-5 border-b border-white/5"><img src="logo.png" alt="VaultCRM" class="w-9 h-9 rounded-lg object-contain"><span class="font-display font-bold text-lg text-white tracking-tight">VaultCRM</span></div>
+        <nav id="sidebar-nav" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto"></nav>
+        <div id="sidebar-user" class="px-4 py-4 border-t border-white/5"></div>
+    </aside>
+    <div class="flex-1 flex flex-col min-h-screen">
+        <header class="sticky top-0 z-20 bg-surface-primary/80 backdrop-blur-lg border-b border-white/5">
+            <div class="flex items-center justify-between px-4 lg:px-8 py-3">
+                <div class="flex items-center gap-4">
+                    <button id="sidebar-toggle" class="lg:hidden p-2 text-slate-400 hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+                    <h1 class="text-lg font-display font-semibold text-white">Asset Hub</h1>
+                </div>
+                <button onclick="alert('Upload simulated! In the live app, files are stored securely outside the public web root.')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-indigo-500 to-cyan-500 text-white vault-glow hover:vault-glow-lg hover:scale-[1.02] transition-all duration-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>Upload File
+                </button>
+            </div>
+        </header>
+        <main id="assets-content" class="flex-1 p-4 lg:p-8"></main>
+    </div>
+    <script src="js/demo-data.js"></script>
+    <script src="js/demo-app.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const user = requireAuth();
+        if (!user) return;
+        populateSidebar(user);
+        initMobileSidebar();
+        const container = document.getElementById('assets-content');
+        container.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fadeIn">
+            ${DEMO_ASSETS.map(a => {
+                const isImg = a.mime.startsWith('image/');
+                return `<div class="bg-surface-elevated border border-white/5 rounded-[0.875rem] p-5 shadow-lg hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300 group">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="w-10 h-10 rounded-lg bg-surface-glass border border-white/5 flex items-center justify-center shrink-0">
+                            ${isImg ? '<svg class="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>' : '<svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>'}
+                        </div>
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="alert('Download simulated.')" class="p-1.5 text-slate-500 hover:text-cyan-400 transition-colors" title="Download"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></button>
+                            <button onclick="this.closest('.group').remove()" class="p-1.5 text-slate-500 hover:text-rose-400 transition-colors" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                        </div>
+                    </div>
+                    <p class="text-sm font-medium text-slate-200 truncate mb-1" title="${a.name}">${a.name}</p>
+                    <div class="flex items-center justify-between text-xs text-slate-500"><span>${a.size}</span><span>${a.uploaded}</span></div>
+                    ${a.project ? `<p class="text-xs text-slate-600 mt-1 truncate">${a.project}</p>` : ''}
+                </div>`;
+            }).join('')}
+        </div>`;
+    });
+    </script>
+</body>
+</html>

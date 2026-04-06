@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VaultCRM — Client Portal Login</title>
+    <meta name="description" content="Premium self-hosted client portal and invoicing CRM. Secure login for clients and administrators.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                fontFamily: { sans: ['Inter','sans-serif'], display: ['Outfit','sans-serif'] },
+                colors: {
+                    surface: { primary:'#0a0a12', secondary:'#11111b', elevated:'#1a1a2e', glass:'rgba(255,255,255,0.04)' },
+                    accent: { cyan:'#06b6d4', indigo:'#6366f1', violet:'#8b5cf6', rose:'#f43f5e', emerald:'#10b981', amber:'#f59e0b' },
+                    vault: { 700:'#4338ca', 800:'#1e1b4b', 900:'#0f0d2e', 950:'#080716' }
+                }
+            }
+        }
+    }
+    </script>
+    <link rel="stylesheet" href="css/demo.css">
+</head>
+<body class="min-h-screen flex items-center justify-center px-4 bg-surface-primary font-sans antialiased text-slate-200">
+
+    <div class="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div class="absolute -top-40 -right-40 w-96 h-96 bg-accent-indigo/10 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-accent-cyan/8 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="relative w-full max-w-md animate-fadeIn">
+        <div class="flex items-center justify-center gap-3 mb-8">
+            <img src="logo.png" alt="VaultCRM" class="w-11 h-11 rounded-xl object-contain">
+            <span class="font-display font-bold text-2xl text-white tracking-tight">VaultCRM</span>
+        </div>
+
+        <div class="bg-surface-glass backdrop-blur-xl border border-white/[0.06] rounded-[0.875rem] p-8 shadow-lg">
+            <h2 class="text-xl font-display font-semibold text-white mb-1">Welcome back</h2>
+            <p class="text-sm text-slate-400 mb-6">Sign in to your client portal</p>
+
+            <div id="login-error" class="hidden mb-5 px-4 py-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                <p class="text-sm text-rose-400">Invalid credentials. Try admin@vaultcrm.com / password</p>
+            </div>
+
+            <form id="demo-login-form" onsubmit="return handleDemoLogin(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label for="login-email" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Email Address</label>
+                        <input type="email" id="login-email" value="admin@vaultcrm.com"
+                               class="w-full bg-surface-primary border border-white/10 rounded-lg px-4 py-2.5 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/30 transition-colors duration-200"
+                               placeholder="you@company.com">
+                    </div>
+                    <div>
+                        <label for="login-password" class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Password</label>
+                        <input type="password" id="login-password" value="password"
+                               class="w-full bg-surface-primary border border-white/10 rounded-lg px-4 py-2.5 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-accent-indigo/50 focus:ring-1 focus:ring-accent-indigo/30 transition-colors duration-200"
+                               placeholder="••••••••">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" checked class="w-4 h-4 rounded bg-surface-primary border-white/10 text-accent-indigo focus:ring-accent-indigo/30 focus:ring-offset-0">
+                        <span class="text-sm text-slate-400">Remember me</span>
+                    </div>
+                    <button type="submit" id="login-submit"
+                            class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-accent-indigo to-accent-cyan text-white shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:shadow-[0_0_40px_rgba(99,102,241,0.2)] hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-primary focus:ring-accent-indigo">
+                        Sign In
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-5 pt-4 border-t border-white/5">
+                <p class="text-xs text-slate-500 text-center mb-2">Demo Credentials</p>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <button onclick="fillCredentials('admin@vaultcrm.com','password')" class="px-3 py-2 rounded-lg bg-surface-elevated border border-white/5 text-slate-300 hover:border-accent-indigo/30 transition-colors text-center">
+                        Admin Login
+                    </button>
+                    <button onclick="fillCredentials('client@vaultcrm.com','password')" class="px-3 py-2 rounded-lg bg-surface-elevated border border-white/5 text-slate-300 hover:border-accent-cyan/30 transition-colors text-center">
+                        Client Login
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-center text-xs text-slate-600 mt-6">&copy; 2025 VaultCRM. Secure Client Portal.</p>
+    </div>
+
+    <script src="js/demo-data.js"></script>
+    <script src="js/demo-app.js"></script>
+</body>
+</html>

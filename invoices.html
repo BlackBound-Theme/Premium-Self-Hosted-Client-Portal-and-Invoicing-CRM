@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoices — VaultCRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],display:['Outfit','sans-serif']},colors:{surface:{primary:'#0a0a12',secondary:'#11111b',elevated:'#1a1a2e',glass:'rgba(255,255,255,0.04)'},accent:{cyan:'#06b6d4',indigo:'#6366f1',violet:'#8b5cf6',rose:'#f43f5e',emerald:'#10b981',amber:'#f59e0b'},vault:{700:'#4338ca'}}}}}</script>
+    <link rel="stylesheet" href="css/demo.css">
+</head>
+<body class="min-h-screen flex bg-surface-primary font-sans antialiased text-slate-200">
+    <div id="sidebar-overlay" class="hidden fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"></div>
+    <aside id="portal-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-surface-secondary border-r border-white/5 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-auto transition-transform duration-300 ease-out flex flex-col">
+        <div class="flex items-center gap-3 px-6 py-5 border-b border-white/5"><img src="logo.png" alt="VaultCRM" class="w-9 h-9 rounded-lg object-contain"><span class="font-display font-bold text-lg text-white tracking-tight">VaultCRM</span></div>
+        <nav id="sidebar-nav" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto"></nav>
+        <div id="sidebar-user" class="px-4 py-4 border-t border-white/5"></div>
+    </aside>
+    <div class="flex-1 flex flex-col min-h-screen">
+        <header class="sticky top-0 z-20 bg-surface-primary/80 backdrop-blur-lg border-b border-white/5">
+            <div class="flex items-center justify-between px-4 lg:px-8 py-3">
+                <div class="flex items-center gap-4">
+                    <button id="sidebar-toggle" class="lg:hidden p-2 text-slate-400 hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+                    <h1 class="text-lg font-display font-semibold text-white">Invoices</h1>
+                </div>
+            </div>
+        </header>
+        <main id="invoices-content" class="flex-1 p-4 lg:p-8"></main>
+    </div>
+    <script src="js/demo-data.js"></script>
+    <script src="js/demo-app.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const user = requireAuth();
+        if (!user) return;
+        populateSidebar(user);
+        initMobileSidebar();
+
+        const invoices = user.role === 'admin' ? DEMO_INVOICES : DEMO_INVOICES.filter(i => i.client === user.name);
+        const container = document.getElementById('invoices-content');
+
+        container.innerHTML = `<div class="space-y-4 animate-fadeIn">
+            ${invoices.map(inv => `
+            <div class="bg-surface-elevated border border-white/5 rounded-[0.875rem] p-5 shadow-lg hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:border-cyan-500/20 transition-all duration-300 cursor-pointer" onclick="showInvoiceDetail(${inv.id})">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-lg bg-surface-glass border border-white/5 flex items-center justify-center shrink-0"><svg class="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg></div>
+                        <div><p class="text-sm font-semibold text-white">${inv.number}</p><p class="text-xs text-slate-500">${inv.client} · ${inv.project}</p></div>
+                    </div>
+                    <div class="flex items-center gap-4 sm:gap-6">
+                        <div class="text-right"><p class="text-sm font-semibold text-white">${formatCurrency(inv.total)}</p><p class="text-xs text-slate-500">Due ${inv.dueDate}</p></div>
+                        ${renderBadge(inv.status.charAt(0).toUpperCase()+inv.status.slice(1), statusBadgeClass(inv.status))}
+                    </div>
+                </div>
+            </div>`).join('')}
+        </div>`;
+    });
+
+    function showInvoiceDetail(id) {
+        const inv = DEMO_INVOICES.find(i => i.id === id);
+        if (!inv) return;
+        const items = DEMO_INVOICE_ITEMS[id] || [{ description: 'Professional Services', quantity: 1, unitPrice: inv.subtotal, lineTotal: inv.subtotal }];
+
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="this.parentElement.remove()"></div>
+        <div class="relative bg-surface-elevated border border-white/5 rounded-[0.875rem] w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto animate-slideUp">
+            <div class="flex items-start justify-between gap-4 mb-6 pb-4 border-b border-white/5">
+                <div><div class="flex items-center gap-3 mb-1"><h2 class="text-xl font-display font-bold text-white">${inv.number}</h2>${renderBadge(inv.status.charAt(0).toUpperCase()+inv.status.slice(1), statusBadgeClass(inv.status))}</div><p class="text-sm text-slate-400">${inv.project}</p></div>
+                <div class="text-right"><p class="text-sm text-slate-400">Issued: ${inv.issueDate}</p><p class="text-sm text-slate-400">Due: ${inv.dueDate}</p>${inv.paidAt ? `<p class="text-sm text-emerald-400 mt-1">Paid: ${inv.paidAt}</p>` : ''}</div>
+            </div>
+            <div class="mb-4"><p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Bill To</p><p class="text-sm text-white font-medium">${inv.client}</p></div>
+            <table class="w-full text-sm mb-6">
+                <thead><tr class="border-b border-white/5"><th class="text-left py-3 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Description</th><th class="text-center py-3 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider w-16">Qty</th><th class="text-right py-3 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider w-24">Price</th><th class="text-right py-3 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider w-24">Total</th></tr></thead>
+                <tbody>${items.map(it => `<tr class="border-b border-white/[0.03]"><td class="py-3 px-2 text-slate-200">${it.description}</td><td class="py-3 px-2 text-center text-slate-400">${it.quantity}</td><td class="py-3 px-2 text-right text-slate-400">${formatCurrency(it.unitPrice)}</td><td class="py-3 px-2 text-right text-white font-medium">${formatCurrency(it.lineTotal)}</td></tr>`).join('')}</tbody>
+            </table>
+            <div class="flex justify-end"><div class="w-full max-w-xs space-y-2">
+                <div class="flex justify-between text-sm"><span class="text-slate-400">Subtotal</span><span class="text-slate-200">${formatCurrency(inv.subtotal)}</span></div>
+                <div class="flex justify-between text-sm"><span class="text-slate-400">Tax (${inv.taxRate}%)</span><span class="text-slate-200">${formatCurrency(inv.taxAmount)}</span></div>
+                <div class="flex justify-between text-base font-bold pt-2 border-t border-white/10"><span class="text-white">Total</span><span class="text-white">${formatCurrency(inv.total)}</span></div>
+            </div></div>
+            ${inv.status !== 'paid' ? `<div class="mt-6 flex justify-end"><button onclick="alert('Stripe checkout would open here in the live app.')" class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-indigo-500 to-cyan-500 text-white vault-glow hover:vault-glow-lg transition-all">Pay with Stripe</button></div>` : ''}
+        </div>`;
+        document.body.appendChild(modal);
+    }
+    </script>
+</body>
+</html>

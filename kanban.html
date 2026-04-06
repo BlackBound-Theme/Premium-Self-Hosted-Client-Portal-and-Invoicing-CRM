@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban Board — VaultCRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],display:['Outfit','sans-serif']},colors:{surface:{primary:'#0a0a12',secondary:'#11111b',elevated:'#1a1a2e',glass:'rgba(255,255,255,0.04)'},accent:{cyan:'#06b6d4',indigo:'#6366f1',violet:'#8b5cf6',rose:'#f43f5e',emerald:'#10b981',amber:'#f59e0b'},vault:{700:'#4338ca'}}}}}</script>
+    <link rel="stylesheet" href="css/demo.css">
+</head>
+<body class="min-h-screen flex bg-surface-primary font-sans antialiased text-slate-200">
+    <div id="sidebar-overlay" class="hidden fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"></div>
+    <aside id="portal-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-surface-secondary border-r border-white/5 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-auto transition-transform duration-300 ease-out flex flex-col">
+        <div class="flex items-center gap-3 px-6 py-5 border-b border-white/5"><img src="logo.png" alt="VaultCRM" class="w-9 h-9 rounded-lg object-contain"><span class="font-display font-bold text-lg text-white tracking-tight">VaultCRM</span></div>
+        <nav id="sidebar-nav" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto"></nav>
+        <div id="sidebar-user" class="px-4 py-4 border-t border-white/5"></div>
+    </aside>
+    <div class="flex-1 flex flex-col min-h-screen">
+        <header class="sticky top-0 z-20 bg-surface-primary/80 backdrop-blur-lg border-b border-white/5">
+            <div class="flex items-center justify-between px-4 lg:px-8 py-3">
+                <div class="flex items-center gap-4">
+                    <button id="sidebar-toggle" class="lg:hidden p-2 text-slate-400 hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+                    <h1 class="text-lg font-display font-semibold text-white">Website Redesign — Kanban</h1>
+                </div>
+                <button onclick="document.getElementById('new-task-modal').classList.remove('hidden')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-indigo-500 to-cyan-500 text-white vault-glow hover:vault-glow-lg hover:scale-[1.02] transition-all duration-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>New Task
+                </button>
+            </div>
+        </header>
+        <main id="kanban-content" class="flex-1 p-4 lg:p-8"></main>
+    </div>
+
+    <div id="new-task-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="this.parentElement.classList.add('hidden')"></div>
+        <div class="relative bg-surface-glass backdrop-blur-xl border border-white/[0.06] rounded-[0.875rem] w-full max-w-lg p-6 animate-slideUp">
+            <h3 class="text-lg font-display font-semibold text-white mb-4">Create New Task</h3>
+            <form onsubmit="event.preventDefault(); simulateCreateTask(this)">
+                <div class="space-y-4">
+                    <div><label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Title</label><input type="text" class="w-full bg-surface-primary border border-white/10 rounded-lg px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-colors" required placeholder="Task title"></div>
+                    <div><label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Description</label><textarea class="w-full bg-surface-primary border border-white/10 rounded-lg px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500/50 transition-colors" rows="3" placeholder="Optional details"></textarea></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Stage</label><select class="w-full bg-surface-primary border border-white/10 rounded-lg px-4 py-2.5 text-sm text-slate-200"><option>Backlog</option><option>In Progress</option><option>Review</option><option>Completed</option></select></div>
+                        <div><label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">Priority</label><select class="w-full bg-surface-primary border border-white/10 rounded-lg px-4 py-2.5 text-sm text-slate-200"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="document.getElementById('new-task-modal').classList.add('hidden')" class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-surface-elevated border border-white/10 text-slate-300 hover:bg-white/5 transition-all">Cancel</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-indigo-500 to-cyan-500 text-white vault-glow hover:vault-glow-lg transition-all">Create Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/demo-data.js"></script>
+    <script src="js/demo-app.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const user = requireAuth();
+        if (!user) return;
+        populateSidebar(user);
+        initMobileSidebar();
+        renderKanban();
+    });
+
+    function renderKanban() {
+        const tasks = DEMO_TASKS[1];
+        const stages = ['backlog','in_progress','review','completed'];
+        const labels = { backlog:'Backlog', in_progress:'In Progress', review:'Review', completed:'Completed' };
+        const container = document.getElementById('kanban-content');
+
+        container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 animate-fadeIn">
+            ${stages.map(stage => `
+            <div class="flex flex-col min-h-[400px] bg-surface-secondary/50 border border-white/5 rounded-[0.875rem] p-3 space-y-2" data-kanban-column="${stage}">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">${labels[stage]}</h3>
+                    <span class="text-xs text-slate-600">${tasks[stage].length}</span>
+                </div>
+                <div class="kanban-card-list space-y-2 flex-1" data-stage="${stage}">
+                    ${tasks[stage].map(t => renderTaskCard(t)).join('')}
+                </div>
+            </div>`).join('')}
+        </div>`;
+
+        enableDragDrop();
+    }
+
+    function renderTaskCard(task) {
+        const pColor = priorityColor(task.priority);
+        return `<div class="bg-surface-elevated border border-white/5 rounded-[0.875rem] p-5 shadow-lg hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:border-indigo-500/30 transition-all duration-300 cursor-grab active:cursor-grabbing" draggable="true" data-card-id="${task.id}">
+            <h4 class="text-sm font-medium text-slate-200 leading-snug mb-2">${task.title}</h4>
+            <div class="flex items-center justify-between">
+                ${renderBadge(task.priority.charAt(0).toUpperCase()+task.priority.slice(1), pColor)}
+                ${task.due ? `<span class="text-xs text-slate-500">${task.due}</span>` : ''}
+            </div>
+            ${task.assignee ? `<div class="mt-2 pt-2 border-t border-white/5 flex items-center gap-2"><div class="w-5 h-5 rounded-full bg-violet-500/20 flex items-center justify-center text-[10px] font-bold text-violet-400">${task.assignee.charAt(0)}</div><span class="text-xs text-slate-500">${task.assignee}</span></div>` : ''}
+        </div>`;
+    }
+
+    function enableDragDrop() {
+        let draggedCard = null;
+        document.querySelectorAll('[draggable="true"]').forEach(card => {
+            card.addEventListener('dragstart', (e) => {
+                draggedCard = card;
+                card.classList.add('kanban-ghost');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            card.addEventListener('dragend', () => {
+                card.classList.remove('kanban-ghost');
+                draggedCard = null;
+            });
+        });
+        document.querySelectorAll('.kanban-card-list').forEach(list => {
+            list.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+            list.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (draggedCard) { list.appendChild(draggedCard); updateColumnCounts(); }
+            });
+        });
+    }
+
+    function updateColumnCounts() {
+        document.querySelectorAll('[data-kanban-column]').forEach(col => {
+            const count = col.querySelector('.kanban-card-list').children.length;
+            col.querySelector('.text-xs.text-slate-600').textContent = count;
+        });
+    }
+
+    function simulateCreateTask(form) {
+        const title = form.querySelector('input').value;
+        if (!title) return;
+        const backlogList = document.querySelector('[data-stage="backlog"]');
+        const newTask = { id: Date.now(), title, priority: 'medium', due: null };
+        backlogList.insertAdjacentHTML('afterbegin', renderTaskCard(newTask));
+        const newCardEl = backlogList.firstElementChild;
+        newCardEl.addEventListener('dragstart', (e) => { newCardEl.classList.add('kanban-ghost'); e.dataTransfer.effectAllowed = 'move'; });
+        newCardEl.addEventListener('dragend', () => { newCardEl.classList.remove('kanban-ghost'); });
+        updateColumnCounts();
+        document.getElementById('new-task-modal').classList.add('hidden');
+        form.reset();
+    }
+    </script>
+</body>
+</html>
